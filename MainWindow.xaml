@@ -3,13 +3,12 @@
     xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
     xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
     xmlns:local="clr-namespace:StyleSnooper"
-    Name="window"
     Title="WPF Style Snooper"
-    Icon="icon.ico"
     local:WindowSettings.Save="True"
-    xml:lang="en-US">
-
+    xml:lang="en-US"
+    Icon="icon.ico">
     <Window.Resources>
+        <!--  ReSharper disable Xaml.RedundantResource  -->
         <Style x:Key="BracketStyle" TargetType="{x:Type Run}">
             <Setter Property="Foreground" Value="Blue" />
         </Style>
@@ -25,6 +24,7 @@
         <Style x:Key="AttributeStyle" TargetType="{x:Type Run}">
             <Setter Property="Foreground" Value="Black" />
         </Style>
+        <!--  ReSharper restore Xaml.RedundantResource  -->
         <Style TargetType="{x:Type Paragraph}">
             <Setter Property="FontFamily" Value="Consolas" />
             <Setter Property="TextAlignment" Value="Left" />
@@ -38,27 +38,24 @@
             DockPanel.Dock="Top"
             LastChildFill="False">
             <Label
-                Name="typeLabel"
                 Width="100"
                 Content="Choose a style"
                 DockPanel.Dock="Left" />
             <ComboBox
-                Name="typeComboBox"
+                Name="TypeComboBox"
                 Width="300"
                 DisplayMemberPath="DisplayName"
                 DockPanel.Dock="Left"
                 IsSynchronizedWithCurrentItem="True"
-                ItemsSource="{Binding Path=Styles, ElementName=window, Mode=OneWay}"
+                ItemsSource="{Binding Styles, Mode=OneWay, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}"
                 SelectionChanged="ShowStyle" />
             <Button
-                Name="button1"
                 Width="75"
                 Height="23"
                 Margin="10,0,0,0"
                 Click="OnLoadClick"
-                DockPanel.Dock="Right">
-                Load
-            </Button>
+                Content="Load"
+                DockPanel.Dock="Right" />
             <TextBox
                 Name="AsmName"
                 Height="26"
@@ -70,15 +67,12 @@
             Margin="10,0"
             DockPanel.Dock="Top"
             Orientation="Horizontal">
-            <Label
-                Name="namespaceLabel"
-                Width="100"
-                Content="Namespace" />
-            <Label Name="namespaceValue" Content="{Binding ElementName=window, Path=Styles/ElementType.Namespace}" />
+            <Label Width="100" Content="Namespace" />
+            <Label Content="{Binding Styles/ElementType.Namespace, RelativeSource={RelativeSource FindAncestor, AncestorType={x:Type local:MainWindow}}}" />
         </StackPanel>
 
         <FlowDocumentScrollViewer
-            Name="styleTextBox"
+            Name="StyleTextBox"
             Padding="0"
             Background="White"
             FontFamily="Consolas" />
