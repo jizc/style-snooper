@@ -295,6 +295,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
 
     private static readonly XNamespace Xmlns = "http://schemas.microsoft.com/winfx/2006/xaml/presentation";
     private static readonly XNamespace XmlnsS = "clr-namespace:System;assembly=mscorlib";
+    private static readonly XNamespace XmlnsC = "clr-namespace:System;assembly=System.Private.CoreLib";
     private static readonly XNamespace XmlnsX = "http://schemas.microsoft.com/winfx/2006/xaml";
 
     private static string CleanupStyle(string serializedStyle)
@@ -303,6 +304,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
 
         RemoveEmptyResources(styleXml);
         SimplifyStyleSetterValues(styleXml);
+        SimplifyStyleTriggerValues(styleXml);
         SimplifyAttributeValues(styleXml);
 
         return styleXml.ToString();
@@ -326,12 +328,11 @@ public sealed partial class MainWindow : INotifyPropertyChanged
         }
     }
 
-    private static void SimplifyStyleSetterValues(XDocument styleXml)
+    private static void SimplifyStyleSetterValues(XContainer styleXml)
     {
         foreach (var elt in styleXml.Descendants())
         {
-            var localName = elt.Name.LocalName;
-            var eltValueNode = elt.Element(Xmlns + $"{localName}.Value");
+            var eltValueNode = elt.Element(Xmlns + $"{elt.Name.LocalName}.Value");
 
             // ReSharper disable once UseNullPropagation
             if (eltValueNode is null)
@@ -370,6 +371,11 @@ public sealed partial class MainWindow : INotifyPropertyChanged
                 elt.SetAttributeValue("Value", SimplifyThickness(eltValue.Value));
                 eltValueNode.Remove();
             }
+            else if (name == XmlnsC + "Boolean")
+            {
+                elt.SetAttributeValue("Value", eltValue.Value);
+                eltValueNode.Remove();
+            }
             else if (name == XmlnsX + "Static")
             {
                 var value = eltValue.Attribute("Member")?.Value;
@@ -379,6 +385,17 @@ public sealed partial class MainWindow : INotifyPropertyChanged
                     elt.SetAttributeValue("Value", value);
                     eltValueNode.Remove();
                 }
+            }
+        }
+    }
+
+    private static void SimplifyStyleTriggerValues(XDocument styleXml)
+    {
+        foreach (var elt in styleXml.Descendants())
+        {
+            if (elt.Element(Xmlns + $"{elt.Name.LocalName}.Triggers") is { } triggersNode)
+            {
+                SimplifyStyleSetterValues(triggersNode);
             }
         }
     }
