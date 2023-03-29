@@ -304,7 +304,6 @@ public sealed partial class MainWindow : INotifyPropertyChanged
 
         RemoveEmptyResources(styleXml);
         SimplifyStyleSetterValues(styleXml);
-        SimplifyStyleTriggerValues(styleXml);
         SimplifyAttributeValues(styleXml);
 
         return styleXml.ToString();
@@ -328,7 +327,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
         }
     }
 
-    private static void SimplifyStyleSetterValues(XContainer styleXml)
+    private static void SimplifyStyleSetterValues(XDocument styleXml)
     {
         foreach (var elt in styleXml.Descendants())
         {
@@ -361,7 +360,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
                 elt.SetAttributeValue("Value", $"{{StaticResource {eltValue.Attribute("ResourceKey")?.Value}}}");
                 eltValueNode.Remove();
             }
-            else if (name.Namespace == XmlnsS)
+            else if (name.Namespace == XmlnsS || name.Namespace == XmlnsC)
             {
                 elt.SetAttributeValue("Value", eltValue.Value);
                 eltValueNode.Remove();
@@ -369,11 +368,6 @@ public sealed partial class MainWindow : INotifyPropertyChanged
             else if (name == Xmlns + "Thickness")
             {
                 elt.SetAttributeValue("Value", SimplifyThickness(eltValue.Value));
-                eltValueNode.Remove();
-            }
-            else if (name == XmlnsC + "Boolean")
-            {
-                elt.SetAttributeValue("Value", eltValue.Value);
                 eltValueNode.Remove();
             }
             else if (name == XmlnsX + "Static")
@@ -385,17 +379,6 @@ public sealed partial class MainWindow : INotifyPropertyChanged
                     elt.SetAttributeValue("Value", value);
                     eltValueNode.Remove();
                 }
-            }
-        }
-    }
-
-    private static void SimplifyStyleTriggerValues(XDocument styleXml)
-    {
-        foreach (var elt in styleXml.Descendants())
-        {
-            if (elt.Element(Xmlns + $"{elt.Name.LocalName}.Triggers") is { } triggersNode)
-            {
-                SimplifyStyleSetterValues(triggersNode);
             }
         }
     }
