@@ -23,22 +23,20 @@ public class WindowSettings
 
     private WindowApplicationSettings? windowApplicationSettings;
 
-    public WindowSettings(Window window)
+    private WindowSettings(Window window)
     {
         this.window = window;
     }
 
     [Browsable(false)]
-    public WindowApplicationSettings Settings => windowApplicationSettings ??= CreateWindowApplicationSettingsInstance();
+    public WindowApplicationSettings Settings => windowApplicationSettings ??= new WindowApplicationSettings();
 
     public static void SetSave(DependencyObject depObj, bool enabled) => depObj.SetValue(SaveProperty, enabled);
-
-    protected virtual WindowApplicationSettings CreateWindowApplicationSettingsInstance() => new();
 
     /// <summary>
     ///   Load the Window Size Location and State from the settings object
     /// </summary>
-    protected virtual void LoadWindowState()
+    private void LoadWindowState()
     {
         Settings.Reload();
         if (Settings.Location != Rect.Empty)
@@ -58,7 +56,7 @@ public class WindowSettings
     /// <summary>
     ///   Save the Window Size, Location and State to the settings object
     /// </summary>
-    protected virtual void SaveWindowState()
+    private void SaveWindowState()
     {
         Settings.WindowState = window.WindowState;
         Settings.Location = window.RestoreBounds;
@@ -100,15 +98,15 @@ public class WindowSettings
         [UserScopedSetting]
         public Rect Location
         {
-            get => this["Location"] is { } value ? (Rect)value : Rect.Empty;
-            set => this["Location"] = value;
+            get => this[nameof(Location)] is { } value ? (Rect)value : Rect.Empty;
+            set => this[nameof(Location)] = value;
         }
 
         [UserScopedSetting]
         public WindowState WindowState
         {
-            get => this["WindowState"] is { } value ? (WindowState)value : WindowState.Normal;
-            set => this["WindowState"] = value;
+            get => this[nameof(WindowState)] is { } value ? (WindowState)value : WindowState.Normal;
+            set => this[nameof(WindowState)] = value;
         }
     }
 }

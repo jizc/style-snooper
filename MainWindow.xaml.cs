@@ -17,7 +17,11 @@ namespace StyleSnooper;
 
 public sealed partial class MainWindow : INotifyPropertyChanged
 {
-    private readonly Style bracketStyle, elementStyle, quotesStyle, textStyle, attributeStyle;
+    private readonly Style bracketStyle;
+    private readonly Style elementStyle;
+    private readonly Style quotesStyle;
+    private readonly Style textStyle;
+    private readonly Style attributeStyle;
 
     public MainWindow()
     {
@@ -26,11 +30,11 @@ public sealed partial class MainWindow : INotifyPropertyChanged
         InitializeComponent();
 
         // get syntax coloring styles
-        bracketStyle = (Style)Resources["BracketStyle"];
-        elementStyle = (Style)Resources["ElementStyle"];
-        quotesStyle = (Style)Resources["QuotesStyle"];
-        textStyle = (Style)Resources["TextStyle"];
-        attributeStyle = (Style)Resources["AttributeStyle"];
+        bracketStyle = (Style)Resources["BracketStyle"]!;
+        elementStyle = (Style)Resources["ElementStyle"]!;
+        quotesStyle = (Style)Resources["QuotesStyle"]!;
+        textStyle = (Style)Resources["TextStyle"]!;
+        attributeStyle = (Style)Resources["AttributeStyle"]!;
 
         // start out by looking at Button
         CollectionViewSource.GetDefaultView(Styles).MoveCurrentTo(Styles.Single(s => s.ElementType == typeof(Button)));
