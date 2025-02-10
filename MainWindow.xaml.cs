@@ -17,15 +17,31 @@ namespace StyleSnooper;
 
 public sealed partial class MainWindow : INotifyPropertyChanged
 {
+    private static readonly PropertyInfo s_contentElementDefaultStyleProperty;
+
     private readonly Style bracketStyle;
     private readonly Style elementStyle;
     private readonly Style quotesStyle;
     private readonly Style textStyle;
     private readonly Style attributeStyle;
 
+    static MainWindow()
+    {
+        s_contentElementDefaultStyleProperty = typeof(FrameworkContentElement).GetProperty(
+            "DefaultStyleKey",
+            BindingFlags.Instance | BindingFlags.NonPublic)!;
+    }
+
     public MainWindow()
     {
-        Styles = GetStyles(typeof(FrameworkElement).Assembly).ToList();
+        foreach (var styleModel in GetStyles(typeof(FrameworkElement).Assembly))
+        {
+            if (styleModel.ResourceKey is not null
+                && Application.Current.TryFindResource(styleModel.ResourceKey) is not null)
+            {
+                Styles.Add(styleModel);
+            }
+        }
 
         InitializeComponent();
 
@@ -40,7 +56,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
         CollectionViewSource.GetDefaultView(Styles).MoveCurrentTo(Styles.Single(s => s.ElementType == typeof(Button)));
     }
 
-    public List<StyleModel> Styles { get; private set; }
+    public List<StyleModel> Styles { get; private set; } = [];
 
     // Returns all types in the specified assembly that are non-abstract,
     // and non-generic, derive from FrameworkElement, and have a default constructor
@@ -49,7 +65,7 @@ public sealed partial class MainWindow : INotifyPropertyChanged
         foreach (var type in assembly.GetTypes())
         {
             if (type is { IsAbstract: false, ContainsGenericParameters: false }
-                && typeof(FrameworkElement).IsAssignableFrom(type)
+                && (typeof(FrameworkElement).IsAssignableFrom(type) || typeof(FrameworkContentElement).IsAssignableFrom(type))
                 && (type.GetConstructor(Type.EmptyTypes) is not null
                     || type.GetConstructor(BindingFlags.NonPublic | BindingFlags.Instance, null, Type.EmptyTypes, null) is not null))
             {
@@ -69,20 +85,30 @@ public sealed partial class MainWindow : INotifyPropertyChanged
     {
         // make an instance of the type and get its default style key
         if (type.GetConstructor(Type.EmptyTypes) is not null
-            && Activator.CreateInstance(type, false) is FrameworkElement element)
+            && Activator.CreateInstance(type, false) is { } obj)
         {
-            var defaultStyleKey = element.GetValue(DefaultStyleKeyProperty);
+            var defaultStyleKey = obj switch
+            {
+                FrameworkElement element => element.GetValue(DefaultStyleKeyProperty),
+                FrameworkContentElement contentElement => s_contentElementDefaultStyleProperty.GetValue(contentElement),
+                _ => null
+            };
+
+            if (defaultStyleKey is null)
+            {
+                yield break;
+            }
 
             yield return new StyleModel(type.Name, defaultStyleKey, type);
 
-            foreach (var styleModel in GetStylesFromStaticProperties(element))
+            foreach (var styleModel in GetStylesFromStaticProperties(obj))
             {
                 yield return styleModel;
             }
         }
     }
 
-    private static IEnumerable<StyleModel> GetStylesFromStaticProperties(FrameworkElement element)
+    private static IEnumerable<StyleModel> GetStylesFromStaticProperties(object element)
     {
         var properties = element.GetType()
             .GetProperties(BindingFlags.Static | BindingFlags.NonPublic | BindingFlags.Public)
